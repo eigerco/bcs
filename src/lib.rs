@@ -303,6 +303,10 @@
 //! # Ok(())}
 //! ```
 
+#![cfg_attr(not(feature = "std"), no_std)]
+#![macro_use]
+extern crate alloc;
+
 mod de;
 mod error;
 mod ser;
@@ -316,4 +320,4 @@ pub const MAX_CONTAINER_DEPTH: usize = 500;
 
 pub use de::{from_bytes, from_bytes_seed};
 pub use error::{Error, Result};
-pub use ser::{is_human_readable, serialize_into, serialized_size, to_bytes};
+pub use ser::{is_human_readable, serialize_into, to_bytes};
