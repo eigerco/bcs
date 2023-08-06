@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::error::{Error, Result};
+use core::convert::TryFrom;
 use serde::de::{self, Deserialize, DeserializeSeed, IntoDeserializer, Visitor};
-use std::convert::TryFrom;
 
 /// Deserializes a `&[u8]` into a type.
 ///
@@ -137,7 +137,7 @@ impl<'de> Deserializer<'de> {
         Ok(u128::from_le_bytes(le_bytes))
     }
 
-    #[allow(clippy::integer_arithmetic)]
+    #[allow(clippy::arithmetic_side_effects)]
     fn parse_u32_from_uleb128(&mut self) -> Result<u32> {
         let mut value: u64 = 0;
         for shift in (0..32).step_by(7) {
@@ -177,7 +177,7 @@ impl<'de> Deserializer<'de> {
 
     fn parse_string(&mut self) -> Result<&'de str> {
         let slice = self.parse_bytes()?;
-        std::str::from_utf8(slice).map_err(|_| Error::Utf8)
+        core::str::from_utf8(slice).map_err(|_| Error::Utf8)
     }
 
     fn enter_named_container(&mut self, name: &'static str) -> Result<()> {
@@ -369,24 +369,24 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         self.leave_named_container();
         r
     }
-    #[allow(clippy::needless_borrow)]
-    fn deserialize_seq<V>(mut self, visitor: V) -> Result<V::Value>
+
+    fn deserialize_seq<V>(self, visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
         let len = self.parse_length()?;
-        visitor.visit_seq(SeqDeserializer::new(&mut self, len))
+        visitor.visit_seq(SeqDeserializer::new(self, len))
     }
-    #[allow(clippy::needless_borrow)]
-    fn deserialize_tuple<V>(mut self, len: usize, visitor: V) -> Result<V::Value>
+
+    fn deserialize_tuple<V>(self, len: usize, visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        visitor.visit_seq(SeqDeserializer::new(&mut self, len))
+        visitor.visit_seq(SeqDeserializer::new(self, len))
     }
-    #[allow(clippy::needless_borrow)]
+
     fn deserialize_tuple_struct<V>(
-        mut self,
+        self,
         name: &'static str,
         len: usize,
         visitor: V,
@@ -395,21 +395,21 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         V: Visitor<'de>,
     {
         self.enter_named_container(name)?;
-        let r = visitor.visit_seq(SeqDeserializer::new(&mut self, len));
+        let r = visitor.visit_seq(SeqDeserializer::new(self, len));
         self.leave_named_container();
         r
     }
-    #[allow(clippy::needless_borrow)]
-    fn deserialize_map<V>(mut self, visitor: V) -> Result<V::Value>
+
+    fn deserialize_map<V>(self, visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
         let len = self.parse_length()?;
-        visitor.visit_map(MapDeserializer::new(&mut self, len))
+        visitor.visit_map(MapDeserializer::new(self, len))
     }
-    #[allow(clippy::needless_borrow)]
+
     fn deserialize_struct<V>(
-        mut self,
+        self,
         name: &'static str,
         fields: &'static [&'static str],
         visitor: V,
@@ -418,7 +418,7 @@ impl<'de, 'a> de::Deserializer<'de> for &'a mut Deserializer<'de> {
         V: Visitor<'de>,
     {
         self.enter_named_container(name)?;
-        let r = visitor.visit_seq(SeqDeserializer::new(&mut self, fields.len()));
+        let r = visitor.visit_seq(SeqDeserializer::new(self, fields.len()));
         self.leave_named_container();
         r
     }
@@ -464,7 +464,7 @@ struct SeqDeserializer<'a, 'de: 'a> {
     de: &'a mut Deserializer<'de>,
     remaining: usize,
 }
-#[allow(clippy::needless_borrow)]
+
 impl<'a, 'de> SeqDeserializer<'a, 'de> {
     fn new(de: &'a mut Deserializer<'de>, remaining: usize) -> Self {
         Self { de, remaining }

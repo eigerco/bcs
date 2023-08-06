@@ -1,7 +1,6 @@
 [package]
 name = "bcs"
 version = "0.1.4"
-authors = ["Diem <opensource@diem.com>"]
 description = "Binary Canonical Serialization (BCS)"
 repository = "https://github.com/diem/bcs"
 homepage = "https://diem.com"
@@ -10,14 +9,18 @@ license = "Apache-2.0"
 edition = "2018"
 
 [dependencies]
-thiserror = "1.0.37"
-serde = { version = "1.0.117", features = ["derive"] }
+serde = { version = "1", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
-criterion = "0.3.3"
-proptest = "0.10.1"
-proptest-derive = "0.2.0"
+criterion = "0.3"
+proptest = "0.10"
+proptest-derive = "0.2"
 
 [[bench]]
 name = "bcs_bench"
 harness = false
+
+[features]
+default = ["std"]
+std = [
+]
